@@ -38,10 +38,10 @@ REMOTE_URL=$(git config --get remote.$REMOTE_BRANCH.url)
 DOMAIN=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^git@//g' | sed 's/:.*$//g')
 REMOTE_REPO=$(echo $REMOTE_URL | sed 's/^.*://g' | sed 's/\.git$//g')
 
-  git push $REMOTE_NAME $LOCAL_BRANCH
+git push $REMOTE_NAME $LOCAL_BRANCH
 
 # github
-if [ $DOMAIN = 'github.com' ]; then
+if [[ $DOMAIN = 'github.com' ]]; then
   API_URL=$(echo "https://api.github.com/repos/$REMOTE_REPO/pulls")
   curl \
   -H "Content-Type: application/json" \
@@ -51,7 +51,7 @@ if [ $DOMAIN = 'github.com' ]; then
 fi
 
 # bitbucket
-if [ $DOMAIN = 'bitbucket.org' ]; then
+if [[ $DOMAIN = 'bitbucket.org' ]]; then
   API_URL=$(echo "https://api.bitbucket.org/2.0/repositories/$REMOTE_REPO/pullrequests")
   curl \
   -H "Content-Type: application/json" \
