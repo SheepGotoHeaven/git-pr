@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# -------------------------------
+# Open PRs on major git services.
+# -------------------------------
+
+USAGE=''
+
+# warn about uncommitted changes
+if [[ $(git diff --stat) != '' ]]; then
+  echo 'Warning: uncommitted changes in working tree'
+fi
+
+# interpret arguments
+if [ $# -gt 3 ]; then
+  echo 'Too many arguments.'
+  echo $USAGE
+  exit 1
+fi
+
+# set defaults
+REMOTE_NAME='origin'
+REMOTE_BRANCH='master'
+LOCAL_BRANCH=$(git branch | grep \* | cut -d' ' -f2)
+
+if [ $# -gt 0 ]; then
+  REMOTE_NAME=$1
+fi
+if [ $# -gt 1 ]; then
+  REMOTE_BRANCH=$2
+fi
+if [ $# -gt 2 ];  then
+  LOCAL_BRANCH=$3
+fi
+
+USER=$(git config --get user.name)
+REMOTE_URL=$(git config --get remote.$REMOTE_BRANCH.url)
+DOMAIN=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^git@//g' | sed 's/:.*$//g')
+REMOTE_REPO=$(echo $REMOTE_URL | sed 's/^.*://g' | sed 's/\.git$//g')
+
+  git push $REMOTE_NAME $LOCAL_BRANCH
+
+# github
+if [ $DOMAIN = 'github.com' ]; then
+  API_URL=$(echo "https://api.github.com/repos/$REMOTE_REPO/pulls")
+  curl \
+  -H "Content-Type: application/json" \
+  -sSLX POST \
+  -d "{ \"title\": \"$LOCAL_BRANCH\", \"head\": \"$LOCAL_BRANCH\", \"base\": \"$REMOTE_BRANCH\" }" \
+  $API_URL
+fi
+
+# bitbucket
+if [ $DOMAIN = 'bitbucket.org' ]; then
+  API_URL=$(echo "https://api.bitbucket.org/2.0/repositories/$REMOTE_REPO/pullrequests")
+  curl \
+  -H "Content-Type: application/json" \
+  -sSLX POST \
+  -d "{ \"destinaion\": { \"branch\": { \"name\": \"$REMOTE_BRANCH\" } }, \"source\": { \"branch\": { \"name\": \"$LOCAL_BRANCH\" } } }, \"title\": \"$LOCAL_BRANCH\" }" \
+  $API_URL
+fi
