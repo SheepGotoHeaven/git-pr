@@ -4,7 +4,13 @@
 # Open PRs on major git services.
 # -------------------------------
 
+CONFIG=$HOME/.git-pr
 USAGE=''
+
+if [ ! -f $CONFIG ]; then
+  echo 'Config file not found. Create ~/.git-pr and add authentication credentials.'
+  exit 1
+fi
 
 # warn about uncommitted changes
 if [[ $(git diff --stat) != '' ]]; then
@@ -34,16 +40,20 @@ if [ $# -gt 2 ];  then
 fi
 
 USER=$(git config --get user.name)
-REMOTE_URL=$(git config --get remote.$REMOTE_BRANCH.url)
+REMOTE_URL=$(git config --get remote.$REMOTE_NAME.url)
 DOMAIN=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^git@//g' | sed 's/:.*$//g')
 REMOTE_REPO=$(echo $REMOTE_URL | sed 's/^.*://g' | sed 's/\.git$//g')
 
-  git push $REMOTE_NAME $LOCAL_BRANCH
+git push $REMOTE_NAME $LOCAL_BRANCH
+echo $DOMAIN
 
 # github
-if [ $DOMAIN = 'github.com' ]; then
+if [[ $DOMAIN = 'github.com' ]]; then
   API_URL=$(echo "https://api.github.com/repos/$REMOTE_REPO/pulls")
+  USER=$(grep "github_username" $CONFIG | sed 's/^.*= //g')
+  PASS=$(grep "github_password" $CONFIG | sed 's/^.*= //g')
   curl \
+  -u "$USER:$PASS" \
   -H "Content-Type: application/json" \
   -sSLX POST \
   -d "{ \"title\": \"$LOCAL_BRANCH\", \"head\": \"$LOCAL_BRANCH\", \"base\": \"$REMOTE_BRANCH\" }" \
@@ -51,7 +61,7 @@ if [ $DOMAIN = 'github.com' ]; then
 fi
 
 # bitbucket
-if [ $DOMAIN = 'bitbucket.org' ]; then
+if [[ $DOMAIN = 'bitbucket.org' ]]; then
   API_URL=$(echo "https://api.bitbucket.org/2.0/repositories/$REMOTE_REPO/pullrequests")
   curl \
   -H "Content-Type: application/json" \
