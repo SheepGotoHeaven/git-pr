@@ -34,11 +34,12 @@ if [ $# -gt 2 ];  then
 fi
 
 USER=$(git config --get user.name)
-REMOTE_URL=$(git config --get remote.$REMOTE_BRANCH.url)
+REMOTE_URL=$(git config --get remote.$REMOTE_NAME.url)
 DOMAIN=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^git@//g' | sed 's/:.*$//g')
 REMOTE_REPO=$(echo $REMOTE_URL | sed 's/^.*://g' | sed 's/\.git$//g')
 
 git push $REMOTE_NAME $LOCAL_BRANCH
+echo $DOMAIN
 
 # github
 if [[ $DOMAIN = 'github.com' ]]; then
