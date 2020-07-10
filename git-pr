@@ -4,7 +4,13 @@
 # Open PRs on major git services.
 # -------------------------------
 
+CONFIG=$HOME/.git-pr
 USAGE=''
+
+if [ ! -f $CONFIG ]; then
+  echo 'Config file not found. Create ~/.git-pr and add authentication credentials.'
+  exit 1
+fi
 
 # warn about uncommitted changes
 if [[ $(git diff --stat) != '' ]]; then
@@ -44,7 +50,10 @@ echo $DOMAIN
 # github
 if [[ $DOMAIN = 'github.com' ]]; then
   API_URL=$(echo "https://api.github.com/repos/$REMOTE_REPO/pulls")
+  USER=$(grep "github_username" $CONFIG | sed 's/^.*=\s//g')
+  PASS=$(grep "github_password" $CONFIG | sed 's/^.*=\s//g')
   curl \
+  -u "$USER:$PASS" \
   -H "Content-Type: application/json" \
   -sSLX POST \
   -d "{ \"title\": \"$LOCAL_BRANCH\", \"head\": \"$LOCAL_BRANCH\", \"base\": \"$REMOTE_BRANCH\" }" \
