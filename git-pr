@@ -41,11 +41,10 @@ fi
 
 USER=$(git config --get user.name)
 REMOTE_URL=$(git config --get remote.$REMOTE_NAME.url)
-DOMAIN=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^git@//g' | sed 's/:.*$//g')
-REMOTE_REPO=$(echo $REMOTE_URL | sed 's/^.*://g' | sed 's/\.git$//g')
+DOMAIN=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^.*@//g' | sed 's/:.*$//g' | sed 's/\/.*$//g')
+REMOTE_REPO=$(echo $REMOTE_URL | sed 's/^https:\/\///g' | sed 's/^.*://g' | sed 's/^.*\.[a-z][a-z][a-z]\///g' | sed 's/\.git$//g')
 
 git push $REMOTE_NAME $LOCAL_BRANCH
-echo $DOMAIN
 
 # github
 if [[ $DOMAIN = 'github.com' ]]; then
@@ -63,9 +62,12 @@ fi
 # bitbucket
 if [[ $DOMAIN = 'bitbucket.org' ]]; then
   API_URL=$(echo "https://api.bitbucket.org/2.0/repositories/$REMOTE_REPO/pullrequests")
+  USER=$(grep "bitbucket_username" $CONFIG | sed 's/^.*= //g')
+  PASS=$(grep "bitbucket_password" $CONFIG | sed 's/^.*= //g')
   curl \
+  -u "$USER:$PASS" \
   -H "Content-Type: application/json" \
   -sSLX POST \
-  -d "{ \"destinaion\": { \"branch\": { \"name\": \"$REMOTE_BRANCH\" } }, \"source\": { \"branch\": { \"name\": \"$LOCAL_BRANCH\" } } }, \"title\": \"$LOCAL_BRANCH\" }" \
+  -d "{ \"destination\": { \"branch\": { \"name\": \"$REMOTE_BRANCH\" } }, \"source\": { \"branch\": { \"name\": \"$LOCAL_BRANCH\" } }, \"title\": \"$LOCAL_BRANCH\" }" \
   $API_URL
 fi
